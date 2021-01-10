@@ -32,7 +32,7 @@ describe('UpdateProfile', () => {
     await expect(
       showProfile.execute({
         user_id: 'nonexisting-id',
-      })
+      }),
     ).rejects.toBeInstanceOf(AppError);
   });
 });
