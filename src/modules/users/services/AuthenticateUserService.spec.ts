@@ -4,25 +4,33 @@ import FakeUserRepository from '../repositories/fakes/FakeUserRepository';
 import FakeHashProvider from '@modules/users/providers/HashProvider/fakes/FakeHashProvider';
 import AuthenticateUserService from './AuthenticateUserService';
 import CreateUserService from './CreateUserService';
+import FakeCacheProvider from '@shared/container/providers/CacheProvider/fakes/FakeCacheProvider';
 
 let fakeUsersRepository: FakeUserRepository;
 let fakeHashProvider: FakeHashProvider;
 let createUser: CreateUserService;
 let authenticateUser: AuthenticateUserService;
+let fakeCacheProvider: FakeCacheProvider;
 
 describe('AuthenticateUser', () => {
   beforeEach(() => {
     fakeUsersRepository = new FakeUserRepository();
     fakeHashProvider = new FakeHashProvider();
-    createUser = new CreateUserService(fakeUsersRepository, fakeHashProvider);
+    fakeCacheProvider = new FakeCacheProvider();
+
+    createUser = new CreateUserService(
+      fakeUsersRepository,
+      fakeHashProvider,
+      fakeCacheProvider,
+    );
     authenticateUser = new AuthenticateUserService(
       fakeUsersRepository,
-      fakeHashProvider
+      fakeHashProvider,
     );
   });
 
   it('should be able to authenticate', async () => {
-    const user = await createUser.execute({
+    const user = await fakeUsersRepository.create({
       name: 'John Doe',
       email: 'johndoe@example.com',
       password: 'password',
@@ -42,12 +50,12 @@ describe('AuthenticateUser', () => {
       authenticateUser.execute({
         email: 'johndoe@example.com',
         password: 'password',
-      })
+      }),
     ).rejects.toBeInstanceOf(AppError);
   });
 
   it('should not be able to authenticate with a wrong password', async () => {
-    await createUser.execute({
+    await fakeUsersRepository.create({
       name: 'John Doe',
       email: 'johndoe@example.com',
       password: 'password',
@@ -57,7 +65,7 @@ describe('AuthenticateUser', () => {
       authenticateUser.execute({
         email: 'johndoe@example.com',
         password: 'wrongpassword',
-      })
+      }),
     ).rejects.toBeInstanceOf(AppError);
   });
 });
