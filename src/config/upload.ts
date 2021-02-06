@@ -43,7 +43,7 @@ export default {
   config: {
     disk: {},
     aws: {
-      bucket: 'appgobarber-igor',
+      bucket: 'igor-appgobarber',
     },
   },
 } as IUploadConfig;
