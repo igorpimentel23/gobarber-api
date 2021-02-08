@@ -27,22 +27,15 @@ appointmentsRouter.put(
   '/',
   celebrate({
     [Segments.BODY]: {
-      appointmentId: Joi.string().uuid().required(),
+      appointment_id: Joi.string().uuid().required(),
       provider_id: Joi.string().uuid().required(),
       date: Joi.date().required(),
     },
   }),
   appointmentsController.update,
 );
-appointmentsRouter.delete(
-  '/',
-  celebrate({
-    [Segments.BODY]: {
-      appointmentId: Joi.string().uuid().required(),
-    },
-  }),
-  appointmentsController.delete,
-);
+appointmentsRouter.get('/', appointmentsController.show);
+appointmentsRouter.delete('/', appointmentsController.delete);
 appointmentsRouter.get('/me', providerAppointmentsController.index);
 appointmentsRouter.get('/user', userAppointmentsController.index);
 

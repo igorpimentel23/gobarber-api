@@ -4,10 +4,10 @@ import ICreateAppointmentDTO from '@modules/appointments/dtos/ICreateAppointment
 import IUpdateAppointmentDTO from '@modules/appointments/dtos/IUpdateAppointmentDTO';
 import IFindAllInMonthFromProviderDTO from '@modules/appointments/dtos/IFindAllInMonthFromProviderDTO';
 import IFindAllInDayFromProviderDTO from '@modules/appointments/dtos/IFindAllInDayFromProviderDTO';
-import IFindAllFromUserDTO from '@modules/appointments/dtos/IFindAllFromUserDTO';
 
 export default interface IAppointmentsRepository {
   create(data: ICreateAppointmentDTO): Promise<Appointment>;
+  show(id: string): Promise<Appointment | undefined>;
   delete(id: string): Promise<void>;
   update(data: IUpdateAppointmentDTO): Promise<Appointment>;
   findByDate(date: Date, provider_id: string): Promise<Appointment | undefined>;
@@ -18,5 +18,5 @@ export default interface IAppointmentsRepository {
   findAllInDayFromProvider(
     data: IFindAllInDayFromProviderDTO,
   ): Promise<Appointment[]>;
-  findAllFromUser(data: IFindAllFromUserDTO): Promise<Appointment[]>;
+  findAllFromUser(id: string): Promise<Appointment[]>;
 }

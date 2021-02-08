@@ -7,7 +7,7 @@ import ICacheProvider from '@shared/container/providers/CacheProvider/models/ICa
 
 interface IRequest {
   user_id: string;
-  appointmentId: string;
+  appointment_id: string;
 }
 
 @injectable()
@@ -23,9 +23,9 @@ class DeleteAppointmentService {
     private cacheProvider: ICacheProvider,
   ) {}
 
-  public async execute({ user_id, appointmentId }: IRequest): Promise<void> {
+  public async execute({ user_id, appointment_id }: IRequest): Promise<void> {
     const findAppointment = await this.appointmentsRepository.findById(
-      appointmentId,
+      appointment_id,
     );
 
     if (!findAppointment) {
@@ -45,7 +45,10 @@ class DeleteAppointmentService {
       throw new AppError('You can not delete a past appointment');
     }
 
-    await this.appointmentsRepository.delete(appointmentId);
+    const cacheDate = format(date, 'yyyy-M-d');
+    const cacheDateMonth = format(date, 'yyyy-M');
+
+    await this.appointmentsRepository.delete(appointment_id);
 
     const dateFormated = format(date, "dd/MM/yyyy 'às' HH:mm'h");
 
@@ -55,8 +58,20 @@ class DeleteAppointmentService {
     });
 
     await this.cacheProvider.invalidate(
-      `provider-appointments:${provider_id}:${format(date, 'yyyy-M-d')}`,
+      `provider-appointments:${provider_id}:${cacheDate}`,
     );
+
+    await this.cacheProvider.invalidate(
+      `provider-day-availability:${provider_id}:${cacheDate}`,
+    );
+
+    await this.cacheProvider.invalidate(
+      `provider-month-availability:${provider_id}:${cacheDateMonth}`,
+    );
+
+    await this.cacheProvider.invalidate(`user-appointments:${user_id}`);
+
+    await this.cacheProvider.invalidate(`single-appointment:${appointment_id}`);
   }
 }
 

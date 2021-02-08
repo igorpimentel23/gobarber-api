@@ -7,7 +7,7 @@ import INotificationsRepository from '@modules/notifications/repositories/INotif
 import ICacheProvider from '@shared/container/providers/CacheProvider/models/ICacheProvider';
 
 interface IRequest {
-  appointmentId: string;
+  appointment_id: string;
   user_id: string;
   provider_id: string;
   date: Date;
@@ -27,13 +27,13 @@ class CreateAppointmentService {
   ) {}
 
   public async execute({
-    appointmentId,
+    appointment_id,
     user_id,
     provider_id,
     date,
   }: IRequest): Promise<Appointment> {
     const findAppointment = await this.appointmentsRepository.findById(
-      appointmentId,
+      appointment_id,
     );
 
     if (!findAppointment) {
@@ -47,9 +47,7 @@ class CreateAppointmentService {
       throw new AppError('You can not edit this appointment');
     }
 
-    const appointmentDate = parseISO(date.toString());
-
-    if (isBefore(appointmentDate, Date.now())) {
+    if (isBefore(date, Date.now())) {
       throw new AppError("You can't change this appointment to a past date");
     }
 
@@ -57,20 +55,29 @@ class CreateAppointmentService {
       throw new AppError("You can't create an appointment with yourself");
     }
 
-    if (getHours(appointmentDate) < 8 || getHours(appointmentDate) > 17) {
+    if (getHours(date) < 8 || getHours(date) > 17) {
       throw new AppError(
         'You can only create appointments between 8:00 and 18:00',
       );
     }
 
+    const findAppointmentInSameDate = await this.appointmentsRepository.findByDate(
+      date,
+      provider_id,
+    );
+
+    if (findAppointmentInSameDate) {
+      throw new AppError('This appointment is already booked');
+    }
+
     const appointment = await this.appointmentsRepository.update({
-      appointmentId,
+      appointment_id,
       provider_id,
       user_id,
       date,
     });
 
-    const dateFormated = format(appointmentDate, "dd/MM/yyyy 'às' HH:mm'h");
+    const dateFormated = format(date, "dd/MM/yyyy 'às' HH:mm'h");
 
     await this.notificationsRepository.create({
       recipient_id: provider_id,
@@ -78,11 +85,29 @@ class CreateAppointmentService {
     });
 
     await this.cacheProvider.invalidate(
-      `provider-appointments:${provider_id}:${format(
-        appointmentDate,
+      `provider-appointments:${findAppointment.provider_id}:${format(
+        findAppointment.date,
         'yyyy-M-d',
       )}`,
     );
+
+    await this.cacheProvider.invalidate(
+      `provider-day-availability:${findAppointment.provider_id}:${format(
+        findAppointment.date,
+        'yyyy-M-d',
+      )}`,
+    );
+
+    await this.cacheProvider.invalidate(
+      `provider-month-availability:${findAppointment.provider_id}:${format(
+        findAppointment.date,
+        'yyyy-M',
+      )}`,
+    );
+
+    await this.cacheProvider.invalidate(`user-appointments:${user_id}`);
+
+    await this.cacheProvider.invalidate(`single-appointment:${appointment.id}`);
 
     return appointment;
   }

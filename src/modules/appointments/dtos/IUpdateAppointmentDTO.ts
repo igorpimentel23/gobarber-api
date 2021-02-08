@@ -1,5 +1,5 @@
 export default interface IUpdateAppointmentDTO {
-  appointmentId: string;
+  appointment_id: string;
   user_id: string;
   provider_id: string;
   date: Date;

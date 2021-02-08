@@ -5,13 +5,6 @@ import IAppointmentsRepository from '@modules/appointments/repositories/IAppoint
 import ICacheProvider from '@shared/container/providers/CacheProvider/models/ICacheProvider';
 import { classToClass } from 'class-transformer';
 
-interface IRequest {
-  user_id: string;
-  day: number;
-  month: number;
-  year: number;
-}
-
 @injectable()
 class ListUserAppointmentsService {
   constructor(
@@ -21,25 +14,15 @@ class ListUserAppointmentsService {
     @inject('CacheProvider')
     private cacheProvider: ICacheProvider,
   ) {}
-  public async execute({
-    user_id,
-    day,
-    month,
-    year,
-  }: IRequest): Promise<Appointment[]> {
-    const cacheKey = `user-appointments:${user_id}:${year}-${month}-${day}`;
+  public async execute(user_id: string): Promise<Appointment[]> {
+    const cacheKey = `user-appointments:${user_id}`;
 
     let appointments = await this.cacheProvider.recover<Appointment[]>(
       cacheKey,
     );
 
     if (!appointments) {
-      appointments = await this.appointmentsRepository.findAllFromUser({
-        user_id,
-        day,
-        month,
-        year,
-      });
+      appointments = await this.appointmentsRepository.findAllFromUser(user_id);
 
       await this.cacheProvider.save(cacheKey, classToClass(appointments));
     }

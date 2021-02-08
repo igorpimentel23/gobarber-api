@@ -6,7 +6,6 @@ import ICreateAppointmentDTO from '@modules/appointments/dtos/ICreateAppointment
 import IUpdateAppointmentDTO from '@modules/appointments/dtos/IUpdateAppointmentDTO';
 import IFindAllInMonthFromProviderDTO from '@modules/appointments/dtos/IFindAllInMonthFromProviderDTO';
 import IFindAllInDayFromProviderDTO from '@modules/appointments/dtos/IFindAllInDayFromProviderDTO';
-import IFindAllFromUserDTO from '@modules/appointments/dtos/IFindAllFromUserDTO';
 import Appointment from '@modules/appointments/infra/typeorm/entities/Appointment';
 
 class AppointmentsRepository implements IAppointmentsRepository {
@@ -29,9 +28,7 @@ class AppointmentsRepository implements IAppointmentsRepository {
     return findAppointment;
   }
 
-  public async findAllFromUser({
-    user_id,
-  }: IFindAllFromUserDTO): Promise<Appointment[]> {
+  public async findAllFromUser(user_id: string): Promise<Appointment[]> {
     const today = new Date();
     const findAppointment = this.appointments.filter(
       appointment =>
@@ -77,13 +74,21 @@ class AppointmentsRepository implements IAppointmentsRepository {
     return findAppointment;
   }
 
+  public async show(id: string): Promise<Appointment | undefined> {
+    const findAppointment = this.appointments.find(
+      appointment => appointment.id === id,
+    );
+
+    return findAppointment;
+  }
+
   public async delete(id: string): Promise<void> {
     //console.log(this.appointments);
     //this.appointments.splice(appointment);
   }
 
   public async update({
-    appointmentId,
+    appointment_id,
     provider_id,
     user_id,
     date,

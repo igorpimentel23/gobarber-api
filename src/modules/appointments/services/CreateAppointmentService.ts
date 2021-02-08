@@ -75,6 +75,24 @@ class CreateAppointmentService {
       )}`,
     );
 
+    await this.cacheProvider.invalidate(
+      `provider-day-availability:${provider_id}:${format(
+        appointmentDate,
+        'yyyy-M-d',
+      )}`,
+    );
+
+    await this.cacheProvider.invalidate(
+      `provider-month-availability:${provider_id}:${format(
+        appointmentDate,
+        'yyyy-M',
+      )}`,
+    );
+
+    await this.cacheProvider.invalidate(`user-appointments:${user_id}`);
+
+    await this.cacheProvider.invalidate(`single-appointment:${appointment.id}`);
+
     return appointment;
   }
 }
