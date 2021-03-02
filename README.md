@@ -11,6 +11,7 @@ Estas instruções te darão uma cópia do projeto pronta para rodar na sua máq
 Para a instalação do projeto, é necessário que o Docker e Docker Compose esteja instalado na máquina.
 
 [Docker](https://docs.docker.com/get-docker/)
+
 [Docker Compose](https://docs.docker.com/compose/install/)
 
 ### Instalando
