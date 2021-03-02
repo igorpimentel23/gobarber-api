@@ -42,6 +42,8 @@ app.use(
   },
 );
 
-app.listen(3333, () => {
-  console.log('🚀 Server started on port 3333');
-});
+const listenPort = parseInt(process.env.LISTEN_PORT || '80', 10);
+
+app.listen(listenPort, () =>
+  console.log(`🚀 Server started on port ${listenPort}!`),
+);
