@@ -1,8 +1,9 @@
 import { uuid } from 'uuidv4';
-import { isEqual, getMonth, getYear, getDate } from 'date-fns';
+import { isEqual, isAfter, getMonth, getYear, getDate } from 'date-fns';
 
 import IAppointmentsRepository from '@modules/appointments/repositories/IAppointmentsRepository';
 import ICreateAppointmentDTO from '@modules/appointments/dtos/ICreateAppointmentDTO';
+import IUpdateAppointmentDTO from '@modules/appointments/dtos/IUpdateAppointmentDTO';
 import IFindAllInMonthFromProviderDTO from '@modules/appointments/dtos/IFindAllInMonthFromProviderDTO';
 import IFindAllInDayFromProviderDTO from '@modules/appointments/dtos/IFindAllInDayFromProviderDTO';
 import Appointment from '@modules/appointments/infra/typeorm/entities/Appointment';
@@ -27,6 +28,16 @@ class AppointmentsRepository implements IAppointmentsRepository {
     return findAppointment;
   }
 
+  public async findAllFromUser(user_id: string): Promise<Appointment[]> {
+    const today = new Date();
+    const findAppointment = this.appointments.filter(
+      appointment =>
+        appointment.user_id === user_id && isAfter(appointment.date, today),
+    );
+
+    return findAppointment;
+  }
+
   public async findAllInMonthFromProvider({
     provider_id,
     month,
@@ -42,12 +53,52 @@ class AppointmentsRepository implements IAppointmentsRepository {
     return findAppointment;
   }
 
-  public async findByDate(date: Date): Promise<Appointment | undefined> {
-    const findAppointment = this.appointments.find(appointment =>
-      isEqual(appointment.date, date),
+  public async findByDate(
+    date: Date,
+    provider_id: string,
+  ): Promise<Appointment | undefined> {
+    const findAppointment = this.appointments.find(
+      appointment =>
+        isEqual(appointment.date, date) &&
+        appointment.provider_id === provider_id,
     );
 
     return findAppointment;
+  }
+
+  public async findById(id: string): Promise<Appointment | undefined> {
+    const findAppointment = this.appointments.find(
+      appointment => appointment.id === id,
+    );
+
+    return findAppointment;
+  }
+
+  public async show(id: string): Promise<Appointment | undefined> {
+    const findAppointment = this.appointments.find(
+      appointment => appointment.id === id,
+    );
+
+    return findAppointment;
+  }
+
+  public async delete(id: string): Promise<void> {
+    //console.log(this.appointments);
+    //this.appointments.splice(appointment);
+  }
+
+  public async update({
+    appointment_id,
+    provider_id,
+    user_id,
+    date,
+  }: IUpdateAppointmentDTO): Promise<Appointment> {
+    const appointment = new Appointment();
+
+    Object.assign(appointment, { id: uuid(), date, provider_id, user_id });
+
+    this.appointments.push(appointment);
+    return appointment;
   }
 
   public async create({

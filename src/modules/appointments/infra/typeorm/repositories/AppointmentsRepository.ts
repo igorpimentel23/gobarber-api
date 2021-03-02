@@ -1,6 +1,7 @@
-import { getRepository, Repository, Raw } from 'typeorm';
+import { getRepository, Repository, Raw, MoreThan } from 'typeorm';
 import IAppointmentsRepository from '@modules/appointments/repositories/IAppointmentsRepository';
 import ICreateAppointmentDTO from '@modules/appointments/dtos/ICreateAppointmentDTO';
+import IUpdateAppointmentDTO from '@modules/appointments/dtos/IUpdateAppointmentDTO';
 import IFindAllInMonthFromProviderDTO from '@modules/appointments/dtos/IFindAllInMonthFromProviderDTO';
 import IFindAllInDayFromProviderDTO from '@modules/appointments/dtos/IFindAllInDayFromProviderDTO';
 import Appointment from '@modules/appointments/infra/typeorm/entities/Appointment';
@@ -29,6 +30,23 @@ class AppointmentsRepository implements IAppointmentsRepository {
             `to_char(${dateFieldName}, 'DD-MM-YYYY')='${parsedDay}-${parsedMonth}-${year}'`,
         ),
       },
+      relations: ['user'],
+      order: { date: 'ASC' },
+    });
+
+    return appointments;
+  }
+
+  public async findAllFromUser(user_id: string): Promise<Appointment[]> {
+    const today = new Date();
+
+    const appointments = await this.ormRepository.find({
+      where: {
+        user_id,
+        date: MoreThan(today),
+      },
+      relations: ['provider'],
+      order: { date: 'ASC' },
     });
 
     return appointments;
@@ -54,9 +72,49 @@ class AppointmentsRepository implements IAppointmentsRepository {
     return appointments;
   }
 
-  public async findByDate(date: Date): Promise<Appointment | undefined> {
+  public async findByDate(
+    date: Date,
+    provider_id: string,
+  ): Promise<Appointment | undefined> {
     const findAppointment = await this.ormRepository.findOne({
-      where: { date },
+      where: { date, provider_id },
+    });
+    return findAppointment;
+  }
+
+  public async findById(id: string): Promise<Appointment | undefined> {
+    const findAppointment = await this.ormRepository.findOne({
+      where: { id },
+    });
+    return findAppointment;
+  }
+
+  public async delete(id: string): Promise<void> {
+    await this.ormRepository.delete({
+      id,
+    });
+  }
+
+  public async update({
+    appointment_id,
+    provider_id,
+    user_id,
+    date,
+  }: IUpdateAppointmentDTO): Promise<Appointment> {
+    const appointment = await this.ormRepository.save({
+      id: appointment_id,
+      provider_id,
+      user_id,
+      date,
+    });
+
+    return appointment;
+  }
+
+  public async show(id: string): Promise<Appointment | undefined> {
+    const findAppointment = await this.ormRepository.findOne({
+      where: { id },
+      relations: ['user', 'provider'],
     });
     return findAppointment;
   }

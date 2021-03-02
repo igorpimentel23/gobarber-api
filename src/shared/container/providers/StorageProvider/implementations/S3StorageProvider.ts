@@ -10,7 +10,7 @@ export default class DiskStorageProvider implements IStorageProvider {
 
   constructor() {
     this.client = new aws.S3({
-      region: 'us-east-2',
+      region: 'sa-east-1',
     });
   }
 
@@ -43,7 +43,7 @@ export default class DiskStorageProvider implements IStorageProvider {
   public async deleteFile(file: string): Promise<void> {
     await this.client
       .deleteObject({
-        Bucket: 'appgobarber-igor',
+        Bucket: 'igor-appgobarber',
         Key: file,
       })
       .promise();

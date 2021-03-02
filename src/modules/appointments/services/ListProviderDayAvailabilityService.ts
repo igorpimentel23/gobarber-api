@@ -1,6 +1,7 @@
 import { injectable, inject } from 'tsyringe';
 import { getHours, isAfter } from 'date-fns';
 
+import ICacheProvider from '@shared/container/providers/CacheProvider/models/ICacheProvider';
 import IAppointmentsRepository from '@modules/appointments/repositories/IAppointmentsRepository';
 
 interface IRequest {
@@ -20,6 +21,9 @@ class ListProviderDayAvailabilityService {
   constructor(
     @inject('AppointmentsRepository')
     private appointmentsRepository: IAppointmentsRepository,
+
+    @inject('CacheProvider')
+    private cacheProvider: ICacheProvider,
   ) {}
   public async execute({
     provider_id,
@@ -27,35 +31,42 @@ class ListProviderDayAvailabilityService {
     year,
     day,
   }: IRequest): Promise<IResponse> {
-    const appointments = await this.appointmentsRepository.findAllInDayFromProvider(
-      {
-        provider_id,
-        month,
-        year,
-        day,
-      },
-    );
+    const cacheKey = `provider-day-availability:${provider_id}:${year}-${month}-${day}`;
+    let availability = await this.cacheProvider.recover<IResponse>(cacheKey);
 
-    const startingHour = 8;
+    if (!availability) {
+      const appointments = await this.appointmentsRepository.findAllInDayFromProvider(
+        {
+          provider_id,
+          month,
+          year,
+          day,
+        },
+      );
 
-    const eachHour = Array.from(
-      { length: 10 },
-      (value, index) => index + startingHour,
-    );
-    const currentDate = new Date(Date.now());
+      const startingHour = 8;
 
-    const availability = eachHour.map(hour => {
-      const appointmentInHour = appointments.find(appointment => {
-        return getHours(appointment.date) === hour;
+      const eachHour = Array.from(
+        { length: 10 },
+        (value, index) => index + startingHour,
+      );
+      const currentDate = new Date(Date.now());
+
+      availability = eachHour.map(hour => {
+        const appointmentInHour = appointments.find(appointment => {
+          return getHours(appointment.date) === hour;
+        });
+
+        const compareDate = new Date(year, month - 1, day, hour);
+
+        return {
+          hour,
+          available: !appointmentInHour && isAfter(compareDate, currentDate),
+        };
       });
 
-      const compareDate = new Date(year, month - 1, day, hour);
-
-      return {
-        hour,
-        available: !appointmentInHour && isAfter(compareDate, currentDate),
-      };
-    });
+      await this.cacheProvider.save(cacheKey, availability);
+    }
 
     return availability;
   }
