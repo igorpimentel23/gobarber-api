@@ -160,6 +160,54 @@ password_confirmation | string | Confirmação da nova senha do usuário
     ```
     /profile
     ```
+#### Password
+    
+* POST /password/forgot
+
+    Envia um email com um link para restauração da senha. Caso o mail provider configurado seja o Ethereal (default), o link será mostrado no console.
+
+    Exemplo:
+
+    ```
+    /password/forgot
+    ```
+    
+    ```
+    {
+      "email": "joao@teste.com"
+    }
+    ```
+    
+Parâmetro | Tipo | Descrição
+------------- | ------------- | -------------
+email | string | Email cadastrado do usuário para recuperação da senha (obrigatório)
+
+
+* POST /password/reset
+
+    Atualiza a senha do usuário.
+
+    Exemplo:
+
+    ```
+    /password/reset
+    ```
+    
+    ```
+    {
+      {
+        "password":"789123",
+        "password_confirmation":"789123",
+  "token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MTQ3MDQ1NjAsImV4cCI6MTYxNDc5MDk2MCwic3ViIjoiOWJjODdhM2ItMDY4MS00MGExLWFmODAtMDk1MzMzYjI5OGJlIn0.sU7wxnU3olRFIvGOzC8wCrhkfLA-fQfbU-Ms9NqYXh8",
+      }
+    }
+    ```
+    
+Parâmetro | Tipo | Descrição
+------------- | ------------- | -------------
+password | string | Nova senha (obrigatório)
+password_confirmation | string | Confirmação da nova senha (obrigatório)
+token | jwt | Token de autenticação do usuário (obrigatório)
 
 #### Provedores de serviço
 
