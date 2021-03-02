@@ -1,73 +1,334 @@
-# Recuperação de senha
+# GoBarber Backend
 
-**RF** (Requisitos Funcionais)
+API em NodeJS para cadastro, alteração, atualização e consulta de apontamentos e usuários de barbearia.
 
-- O usuário deve poder recuperar sua senha informando o seu email;
-- O usuário deve receber um email com instruções de recuperação de senha;
-- O usuário deve poder resetar sua senha;
+## Começando
 
-**RNF** (Requisitos Não Funcionais)
+Estas instruções te darão uma cópia do projeto pronta para rodar na sua máquina local para propósitos de testes.
 
-- Utilizar o Mailtrap para testar enios em ambiente de dev;
-- Utilizar o Amazon SES para envios em produção;
-- O envio de emails deve acontecer em segundo plano (background job);
+### Pré-requisitos
 
-**RN** (Regra de Negócio)
+Para a instalação do projeto, é necessário que o Docker e Docker Compose esteja instalado na máquina.
 
-- O link enviado por email para resetar senha, deve expirar em 2h;
-- O usuário precisa confirmar a nova senha ao resetar sua senha;
+[Docker](https://docs.docker.com/get-docker/)
+[Docker Compose](https://docs.docker.com/compose/install/)
 
-# Atualização do perfil
+### Instalando
 
-**RF**
+Depois de clonar e baixar o projeto, excute o comando:
 
-- O usuário deve poder atualizar seu nome, email e senha;
+```
+cp .env.example .env
+```
 
-**RN**
+Então, execute:
 
-- O usuário não pode alterar seu email para um email ja utilizado;
-- Para atualizar sua senha, o usuário deve informar a senha antiga;
-- Para atualizar sua senha, o usuário deve confirmar a senha
+```
+docker-compose up --build -d
+```
 
-# Painel do prestador
+Após o término, para verificar se os containers foram construidos com sucesso, executar o comando:
 
-**RF**
+```
+docker ps
+```
 
-- O usuário deve poder listar seus agendamentos de um dia específico;
-- O prestador deve receber uma notificação sempre que houver um novo
-  agendamento;
-- O prestador deve poder visualizar as notificações não lidas;
+Os seguintes dados devem aparecer:
 
-**RNF**
+```
+CONTAINER ID        IMAGE                   COMMAND                  CREATED             STATUS              PORTS                      NAMES
+xxxxxxxxxxxx        gobarber-api_gobarber   "docker-entrypoint.s…"   8 minutes ago       Up 8 minutes        0.0.0.0:80->80/tcp         gobarber.api
+yyyyyyyyyyyy        mongo                   "docker-entrypoint.s…"   8 minutes ago       Up 8 minutes        0.0.0.0:27017->27017/tcp   gobarber.mongo
+zzzzzzzzzzzz        postgres:13-alpine      "docker-entrypoint.s…"   8 minutes ago       Up 8 minutes        0.0.0.0:5432->5432/tcp     gobarber.postgres
+wwwwwwwwwwww        redis:6-alpine          "docker-entrypoint.s…"   8 minutes ago       Up 8 minutes        0.0.0.0:6379->6379/tcp     gobarber.redis
+```
 
-- Os agendamentos do prestador do dia, devem ser armazanados em cache;
-- As notificações do prestador devem ser armazenadas no MongoDB;
-- AS notificações do prestador devem ser enviadas em tempo real em Socket.io;
+Feito isso, para a instalação das migrations, executar:
 
-**RN**
+```
+./container
+```
 
-- A notificação deve ter um status de lida ou não-lida para que o prestador
-  possa controlar;
+e em seguida:
 
-# Agendamento de serivços
+```
+yarn typeorm migration:run
+```
 
-**RF**
+### Rotas da aplicação
 
-- O usuário deve poder listar todos os prestadores de serviço cadastrados;
-- O usuário deve poder listar os dias de um mês com pelo menos um horário
-  disponível de um prestador;
-- O usuário deve poder listar horários disponíveis em um dia específico de um
-  prestador;
-- O usuário deve poder realizar um novo agendamento;
+#### Usuários
 
-**RNF**
+* POST /users
 
-- A listagem de prestadores deve ser armazenada em cache;
+    Cadastra um usuário.
 
-**RN**
+    Exemplo:
 
-- Cada agendamento deve durar 1h exatamente;
-- Os agendamentos devem estar disponíveis entre 8:00 as 18:00;
-- O usuário não pode agendar em um horário já ocupado;
-- O usuário não pode agendar em um horário que já passou;
-- O usuário não pode agendar um horário consigo mesmo;
+    ```
+    /users
+    ```
+    
+    ```
+    {
+      "name": "João",
+      "email": "joão@teste.com",
+      "password": "123789"
+    }
+    ```
+    
+Parâmetro | Tipo | Descrição
+------------- | ------------- | -------------
+name | string | Nome do usuário (obrigatório)
+email | string | Email do usuário (obrigatório)
+password | string | Senha do usuário (obrigatório)
+
+
+* POST /sessions
+
+    Autentica um usuário e gera um token JWT a ser passado no header das requisições que nessecitam de autenticação.
+
+    Exemplo:
+
+    ```
+    /sessions
+    ```
+    
+    ```
+    {
+      "email": "joão@teste.com",
+      "password": "123789"
+    }
+    ```
+    
+Parâmetro | Tipo | Descrição
+------------- | ------------- | -------------
+email | string | Email do usuário (obrigatório)
+password | string | Senha do usuário (obrigatório)
+
+
+* PATCH users/avatar
+
+    Faz upload do avatar do usuário. Rota Necessita de token de autenticação.
+
+    Exemplo:
+
+    ```
+    users/avatar
+    ```
+
+Parâmetro | Tipo | Descrição
+------------- | ------------- | -------------
+avatar | file | Avatar do usuário (obrigatório)
+
+
+* PUT /profile
+
+    Atualiza as informações de cadastro do usuário. Rota necessita de autenticação.
+
+    Exemplo:
+
+    ```
+    /profile
+    ```
+    
+    ```
+    {
+      "name": "João da Silva",
+      "email": "joão@teste.com",
+      "password":"123456",
+      "password_confirmation":"789123",
+      "old_password":"789123"
+    }
+    ```
+    
+Parâmetro | Tipo | Descrição
+------------- | ------------- | -------------
+name | string | Nome do usuário (obrigatório)
+email | string | Email do usuário (obrigatório)
+old_password | string | Senha antiga do usuário
+password | string | Nova senha do usuário
+password_confirmation | string | Confirmação da nova senha do usuário
+
+* GET /profile
+
+    Retorna informações do cadastro do usuário. Rota necessita de autenticação.
+
+    Exemplo:
+
+    ```
+    /profile
+    ```
+
+#### Provedores de serviço
+
+* GET /providers
+
+    Retorna todos os provedores de serviço cadastrados. Rota necessita de autenticação.
+
+    Exemplo:
+
+    ```
+    /providers
+    ```
+
+
+* GET /providers/{provider_id}/day-availability
+
+    Retorna a disponibilidade de horário de um provedor em um dia especifico. Rota necessita de autenticação.
+
+    Exemplo:
+
+    ```
+    /providers/b54618f5-704f-42f1-8862-47e637594d3e/day-availability?year=XXXX&month=Y&day=ZZ
+    ```
+    
+Parâmetro | Tipo | Descrição
+------------- | ------------- | -------------
+provider_id | uuid | ID de identificação do provedor (obrigatório)
+year | number | Ano da data da pesquisa (obrigatório)
+month | number | Mês da data da pesquisa (obrigatório)
+day | number | Dia da data da pesquisa (obrigatório)
+
+
+* GET /providers/{provider_id}/month-availability
+
+    Retorna a disponibilidade de dias de um provedor em um mês especifico. Rota necessita de autenticação.
+
+    Exemplo:
+
+    ```
+    /providers/b54618f5-704f-42f1-8862-47e637594d3e/month-availability?year=XXXX&month=Y
+    ```
+    
+Parâmetro | Tipo | Descrição
+------------- | ------------- | -------------
+provider_id | uuid | ID de identificação do provedor (obrigatório)
+year | number | Ano da data da pesquisa (obrigatório)
+month | number | Mês da data da pesquisa (obrigatório)
+
+
+#### Apontamentos
+
+* GET /appointments/me
+
+    Retorna os apontamentos do provedor logado em um dia especifico. Rota necessita de autenticação.
+
+    Exemplo:
+
+    ```
+    /appointments/me?year=XXXX&month=Y&day=ZZ
+    ```
+    
+Parâmetro | Tipo | Descrição
+------------- | ------------- | -------------
+year | number | Ano da data da pesquisa (obrigatório)
+month | number | Mês da data da pesquisa (obrigatório)
+day | number | Dia da data da pesquisa (obrigatório)
+
+    
+* GET /appointments/user
+
+    Retorna os apontamentos marcados pelo usuário logado. Rota necessita de autenticação.
+
+    Exemplo:
+
+    ```
+    /appointments/me
+    ```
+
+* POST /appointments
+
+    Cria um apontamento. Rota necessita de autenticação.
+
+    Exemplo:
+
+    ```
+    /appointments
+    ```
+    
+    ```
+    {
+      "date": "2021-03-10T17:00:00.000Z",
+      "provider_id": "b54618f5-704f-42f1-8862-47e637594d3e"
+    }
+    ```
+    
+Parâmetro | Tipo | Descrição
+------------- | ------------- | -------------
+date | Date | Data do apontamento (obrigatório)
+provider_id | uuid | ID do provedor do apontamento (obrigatório)
+
+
+* PUT /appointments
+
+    Atualiza um apontamento. Rota necessita de autenticação.
+
+    Exemplo:
+
+    ```
+    /appointments
+    ```
+    
+    ```
+    {
+      "appointment_id": "5d1928e3-342d-4e5b-b5fe-8e408b86be03",
+      "date": "2021-03-10T17:00:00.000Z",
+      "provider_id": "b54618f5-704f-42f1-8862-47e637594d3e"
+    }
+    ```
+    
+Parâmetro | Tipo | Descrição
+------------- | ------------- | -------------
+appointment_id | uuid | ID do apontamento (obrigatório)
+date | Date | Data do apontamento (obrigatório)
+provider_id | uuid | ID do provedor do apontamento (obrigatório)
+
+
+* DELETE /appointments
+
+    Deleta um apontamento. Rota necessita de autenticação.
+
+    Exemplo:
+
+    ```
+    /appointments?appointment_id=5fc6194f-19d1-4783-b3a5-cad4207ef045
+    ```
+    
+Parâmetro | Tipo | Descrição
+------------- | ------------- | -------------
+appointment_id | uuid | ID do apontamento (obrigatório)
+    
+
+* GET /appointments
+
+    Retorna os dados de um apontamento. Rota necessita de autenticação.
+
+    Exemplo:
+
+    ```
+    /appointments?appointment_id=5fc6194f-19d1-4783-b3a5-cad4207ef045
+    ```
+    
+    
+Parâmetro | Tipo | Descrição
+------------- | ------------- | -------------
+appointment_id | uuid | ID do apontamento (obrigatório)
+
+
+## Executando testes
+
+Para executar os testes automatizados da aplicação, na pasta raiz da aplicação, executar:
+
+```
+yarn test
+```
+
+## Autores
+
+* **Igor Pimentel** - *Trabalho inicial* - [igorpimentel23](https://github.com/igorpimentel23)
+
+
+## Licença
+
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
