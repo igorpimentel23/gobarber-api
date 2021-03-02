@@ -63,6 +63,3 @@ buck-out/
 
 # CocoaPods
 /ios/Pods/
-
-#ORM
-ormconfig.json

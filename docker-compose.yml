@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  gobarber:
+    build: '.'
+    container_name: gobarber.api
+    ports:
+      - ${LISTEN_PORT}:${LISTEN_PORT}
+    volumes:
+      - .:/app
+    links:
+      - postgresql
+      - redis
+    depends_on:
+      - postgresql
+      - redis
+      - mongo
+
+  postgresql:
+    image: postgres:13-alpine
+    container_name: gobarber.postgres
+    ports:
+        - ${POSTGRES_PORT}:${POSTGRES_PORT}
+    volumes:
+      - postgresdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DATABASE}
+
+  redis:
+    container_name: gobarber.redis
+    image: redis:6-alpine
+    command: ["redis-server", "--bind", "redis", "--port", "6379"]
+    ports:
+        - ${REDIS_PORT}:${REDIS_PORT}
+    volumes:
+        - redisdata:/data
+
+  mongo:
+    container_name: gobarber.mongo
+    image: mongo
+    ports:
+        - ${MONGO_PORT}:${MONGO_PORT}
+    volumes:
+        - mongodata:/data
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+
+volumes:
+  postgresdata:
+  redisdata:
+  mongodata:
